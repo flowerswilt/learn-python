@@ -5,37 +5,107 @@ import time
 # 只能用于类unix系统中
 # python中能够跨平台的开启子进程方式是使用Process类
 
-# =====1=====
-# 主进程等待子进程结束后，主进程才会结束
-# 可以使用process实例的join()方法阻塞主进程代码
-print('主进程开始')
-def test():
-    for i in range(5):
-        print('-----test-----')
-        time.sleep(1)
+# Process开启子进程的两种方式
 
-p = Process(target=test)
+# 第一种方式
+# def task(name):
+#     print('%s is running' %name)
+#     time.sleep(3)
+#     print('%s was done' %name)
+#
+#
+# if __name__ == '__main__':
+#
+#     print('----main start----')
+#
+#     p = Process(target=task, args=('zhq',)) # 创建子进程 传递任务参数
+#     p.start() # 启动子进程
+#
+#     print('----main end----')
+"""
+输出:
+    ----main start----
+    ----main end----
+    zhq is running
+    zhq was done
+从输出可以看出来，主进程在子进程启动后，继续执行后续代码
+子进程不会阻塞主进程，当子进程结束后，整个程序才会结束
+"""
 
-p.start()
+# 第二种方式
+# class MyProcess(Process):
+#     "自定义进程类，继承自标准库中的Process类，覆盖run方法"
+#     def __init__(self, name):
+#         Process.__init__(self)
+#         self.name = name
+#
+#     def run(self):
+#         print('%s is running' %self.name)
+#         time.sleep(3)
+#         print('%s was done' %self.name)
+#
+#
+# if __name__ == '__main__':
+#
+#     print('----main start----')
+#
+#     p = MyProcess('zhq')
+#     p.start()
+#     p.join()
+#
+#     print('----main end----')
 
-p.join()
+# 不添加join方法时，与第一种方式的输出一样
+# 如果希望阻塞主线程，那么直接调用join()方法
+"""
+输出:
+    ----main start----
+    zhq is running
+    zhq was done
+    ----main end----
+可以看到，主进程会被阻塞，等待子进程执行完毕
+"""
 
-print('main')
+# 注意: 进程之间的内存空间相互隔离
+x = 100
 
-# =====2=====
-# 可以自定义类继承Process来完成新进程创建的需求
-# 自定义类必须实现run方法
-class My_Process(Process):
-    def __init__(self):
-        Process.__init__(self)
-
-    def run(self):
-        while True:
-            print('------子进程开始------')
-            time.sleep(1)
+def task():
+    "子进程修改全局变量"
+    print('----子进程开始----')
+    time.sleep(3)
+    global x
+    x = 0
+    print('子进程中全局变量的值变为%s' %x)
+    print('----子进程结束----')
 
 if __name__ == '__main__':
+    print('----主进程开始----')
+    print(x) # 先看一下全局变量x的值
+    p = Process(target=task) # 创建子进程
+    p.start() # 启动子进程，子进程内部会修改全局变量x的值
+    p.join() # 阻塞主进程，等待子进程结束
+    print('子进程结束后，全局变量x的值为%s' %x)
+    print('----主进程结束----')
 
-    p = My_Process()
-    p.start()
+"""
+    输出：
+        ----主进程开始----
+        100
+        ----子进程开始----
+        子进程中全局变量的值变为0
+        ----子进程结束----
+        子进程结束后，全局变量x的值为100
+        ----主进程结束----
+    从上面输出可以看出，子进程修改了全局变量，但主进程的全局变量并不受影响
+"""
 
+# Process实例的其他属性
+
+# 1. process.name 进程默认名字
+# 2. process.terminate 终止子进程
+# 3. process.is_alive 判断子进程是否还活着,注意有延时
+# 4. process.pid 子进程的pid号
+
+# 僵尸进程与孤儿进程
+# 当主进程始终不结束，而子进程已经结束时，所有由主进程开启的进程都会成为僵尸进程，频繁开启此类进程，将会造成资源浪费
+# 当主进程运行完毕，而子进程尚未结束，所有由主进程开启的进程都会成为孤儿进程，这些孤儿进程将由系统进程接收
