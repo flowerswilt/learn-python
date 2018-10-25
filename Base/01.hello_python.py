@@ -13,3 +13,15 @@ def print_info():
     print(sys.platform) # 输出当前系统环境
 
 print_info()
+
+# 命令行启动python解释器
+# python3 name.py args
+# 退出解释器
+# quit() # python2无效
+# exit() # python2
+
+# 传递参数给解释器
+# import sys
+# 在调用python解释器时，脚本名和附加参数会存入sys.args
+# 这是一个列表sys.args[0] 存储脚本名称
+# sys.args[1] 及以后，存储实际存储的参数
