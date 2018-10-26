@@ -1,5 +1,6 @@
-from multiprocessing import Process
+from multiprocessing import Process, Lock
 import time
+import random
 # os.fork()虽然能够开启子进程
 # 但是它有个致命的缺点，无法跨平台
 # 只能用于类unix系统中
@@ -130,3 +131,49 @@ import time
     从输出可以看到，子进程根本就没有来得及执行
     守护进程会在主进程结束的时候，不管子进程有没有执行完毕，都会被操作系统回收
 """
+
+# 在不通过调用join()方法时，子进程的执行顺序是无法预测的
+# join()方法会导致主进程阻塞，降低程序执行效率
+# 子进程共同使用同一个系统资源时，会出现抢占错乱的问题
+# 这就是互斥锁的用途
+# multiprocessing 模块提供了Lock类，也就是互斥锁
+mutex = Lock() # 实例化一个互斥锁
+
+def task1(lock):
+    "由于子进程是互不相同的全局环境，所以我们要在子进程中接收互斥锁,好让各个子进程拿到同一个锁"
+    lock.acquire() # 上锁
+    print('--task1 start----')
+    time.sleep(random.randint(1, 3)) # 随机休息，模拟任务执行
+    print('----task1 end----')
+    lock.release() # 解锁 子进程一定要解锁，否则其他子进程无法重新上锁
+
+
+def task2(lock):
+    lock.acquire()
+    print('----task2 start----')
+    time.sleep(random.randint(1, 3))
+    print('----task2 end----')
+    lock.release()
+
+
+def task3(lock):
+    lock.acquire()
+    print('----task3 start----')
+    time.sleep(random.randint(1, 3))
+    print('----task3 end----')
+    lock.release()
+
+
+if __name__ == '__main__':
+
+    print('----main start ----')
+
+    p1 = Process(target=task1, args=(mutex,)) # 将互斥锁传入子进程, 确保所有子进程共用一个互斥锁
+    p2 = Process(target=task2, args=(mutex,)) # 将互斥锁传入子进程
+    p3 = Process(target=task3, args=(mutex,)) # 将互斥锁传入子进程
+
+    p1.start()
+    p2.start()
+    p3.start()
+
+    print('----main end ----')
