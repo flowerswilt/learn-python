@@ -15,6 +15,11 @@ print('c:some\name') # 此处\n 被解释为换行符 输出: c:some
                                               # ame
 print(r'c:\some\name') # 保留了字符原意 输出: c:\some\name
 
+# 字符串的格式化输出
+age = 20
+name = 'zhq'
+print("{0} was {1} years old when he wrote this book".format(name, age))
+
 # 字符串是不可变对象
 # 可以使用str()内置函数，将其他对象转换为字符串
 # 具体转换形式根据被转换对象__str__()方法的返回值而不同
